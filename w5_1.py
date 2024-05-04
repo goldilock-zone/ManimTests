@@ -1,49 +1,37 @@
 from manim import *
 import random
 
-class ColoredGraph(Scene):
+class OrbitDiagram(Scene):
     def construct(self):
-        # Define the graph layout
-        vertices = {
-            0: LEFT * 2 + DOWN,
-            1: LEFT * 2 + UP,
-            2: RIGHT * 2 + UP,
-            3: RIGHT * 2 + DOWN,
-        }
-        edge_list = [(0, 1), (1, 2), (2, 3), (3, 0), (0, 2), (1, 3)]
-        edge_config = {
-            (0, 1): {"stroke_color": RED, "stroke_width": 4},
-            (1, 2): {"stroke_color": GREEN, "stroke_width": 4},
-            (2, 3): {"stroke_color": BLUE, "stroke_width": 4},
-            (3, 0): {"stroke_color": PURPLE, "stroke_width": 4},
-            (0, 2): {"stroke_color": TEAL, "stroke_width": 4},
-            (1, 3): {"stroke_color": ORANGE, "stroke_width": 4},
-        }
+        # Define the number of orbits and their properties
+        num_orbits = 3
+        colors = [BLUE, PURPLE, TEAL]  # Colors for each orbit
+        dot_colors = [GREEN, PURPLE, GREEN]  # Colors for the dots on each orbit
+        orbits = []
+        dots_group = VGroup()
 
-        # Create the graph
-        graph = Graph(vertices.keys(), edge_list, layout=vertices, labels=True, edge_config=edge_config)
+        # Create the orbits and the dots
+        for i in range(num_orbits):
+            # Create an ellipse for the orbit
+            orbit = Ellipse(width=4 + i, height=2 + 0.5 * i, color=colors[i]).shift(UP * 0.5 * i)
+            orbits.append(orbit)
+            self.add(orbit)
 
-        # Add the graph to the scene
-        self.add(graph)
+            # Add dots to each orbit
+            num_dots = 6
+            for j in range(num_dots):
+                angle = TAU / num_dots * j
+                dot = Dot(color=dot_colors[i]).move_to(orbit.point_at_angle(angle))
+                dots_group.add(dot)
 
-        # Animate the opacity of the edges
-        animations = []
-        for edge in edge_list:
-            animations.append(self.pulsate_edge(graph.edges[edge]))
+        # Add all dots at once to the scene for better performance
+        self.add(dots_group)
 
-        self.play(AnimationGroup(*animations, lag_ratio=0.5))
+        # Animate all elements coming into view
+        self.play(LaggedStart(*[Create(orbit) for orbit in orbits], lag_ratio=0.5))
+        self.play(LaggedStart(*[GrowFromCenter(dot) for dot in dots_group], lag_ratio=0.1))
         self.wait(2)
 
-    def pulsate_edge(self, edge):
-        # Create a pulsating effect by animating the opacity
-        return AnimationGroup(
-            edge.animate.set_opacity(1),
-            edge.animate.set_opacity(0.2),
-            rate_func=there_and_back,  # Makes the opacity animate back and forth
-            run_time=2,  # Duration of the pulsating effect
-            lag_ratio=random.uniform(0, 1)  # Random stagger to desynchronize the pulsating effect
-        )
-
 if __name__ == "__main__":
-    scene = ColoredGraph()
+    scene = OrbitDiagram()
     scene.render()
